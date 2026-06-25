@@ -1,48 +1,42 @@
 no one can be banned cause this is 'merica 🦅🦅🦅
-use `.t sync` to make this preview 1280 better
-{set:dm_structure|hueshifthsv # 25
-flop #
-audiopitch # 2**(2/12)}{iscript:
-load {media} 1
-snip 1 {arg:0} {math:{arg:0}+{arg:1}}
-copy 1 2
-hueshifthsv 2 50
-audiopitch 2 2**(1/12)
-volume 2 1.3
-copy 1 3
-waaw 3
-get 3 width w
-get 3 height h
-rotate 3 -90
-waves 3 w/60 w/4 6
-flop 3
-waves 3 w/70 w/6 4
-flop 3
-waves 3 w/110 w/13 6
-rotate 3 90
-cover 3 w h
-audiopitch 3 2**(-2/12)
-copy 2 4
-copy 1 5
-snip 5 0 {math:{arg:1}/2}
-copy 5 6
-hueshifthsv 6 25
-flop 6
-audiopitch 6 2**(2/12)
-copy 5 7
-hueshifthsv 7 50
-audiopitch 7 2**(1/12)
-copy 7 8
-hueshifthsv 8 25
-flop 8
-audiopitch 8 2**(2/12)
-copy 5 9
-hueshifthsv 9 180
-audiopitch 9 2**(-2/12)
-copy 9 10
-{replace:#|with:10|in:{get:dm_structure}}
-copy 7 11
-copy 8 12
-concatmultiple 1 2 3 4 5 6 7 8 9 10 11 12
-render 1
-}
+-# use `.t sync` to make this preview 1280 better
+-# btw the mediascript code the author made didn't work D:
+{set:code|load {iv}
+mkdir ./displacemaps
+curl -s "https://file.garden/aTXso15ukD3mnuPI/tv_sim_displacement_map.mov" -o "./displacemaps/tvsimulator.mov"
+vidlen=$(ffprobe -i $FILE_1 -show_entries format=duration -v quiet -of csv="p=0")
+
+s={or:{arg:0}|1.85}
+e={or:{arg:1}|0.85}
+
+t=$(awk -v vidlen="$vidlen" 'BEGIN\u007b printf "%.4f", {or:{arg:1}|0.85}\u007d')
+t2=$(awk -v vidlen="$vidlen" 'BEGIN\u007b printf "%.4f", ({or:{arg:1}|0.85})/2\u007d')
+t3=$(awk -v vidlen="$vidlen" 'BEGIN\u007b printf "%.4f", ({or:{arg:0}|1.85})+({or:{arg:1}|0.85})\u007d')
+
+magick hald:4 -modulate 100,100,%[fx:42/1.8+100] hslhue_42.ppm
+magick hald:4 -modulate 100,100,%[fx:179.2/1.8+100] hslhue_179_2.ppm
+magick hald:4 -modulate 100,100,%[fx:24/1.8+100] hslhue_24.ppm
+magick hald:4 -modulate 100,100,%[fx:100/1.8+100] hslhue_100.ppm
+
+ffmpeg -stream_loop -1 -i $FILE_1 -vf scale=640:360,setsar=1:1 -ss $s -to $t3 -c:v ffv1 -c:a pcm_s16le 0.avi
+
+w=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of default=nw=1:nk=1 0.avi)
+h=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of default=nw=1:nk=1 0.avi)
+
+ww=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of default=nw=1:nk=1 $FILE_1)
+hh=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of default=nw=1:nk=1 $FILE_1)
+
+ffmpeg -i 0.avi -t $t -c:v ffv1 -c:a pcm_s16le 1.avi
+ffmpeg -i 0.avi -vf "movie=hslhue_45.ppm,[in]haldclut",format=yuv420p -af "rubberband=pitch=2^(1/12):window=short:transients=mixed:detector=soft:channels=together:pitchq=consistency" -t $t -c:v ffv1 -c:a pcm_s16le 2.avi
+ffmpeg -i 0.avi -stream_loop -1 -i ./displacemaps/tvsimulator.mov -filter_complex "movie=hslhue_180.ppm[h];[0][h]haldclut,hflip,crop=iw/2:ih:0:0,split[left][tmp];[tmp]hflip[right];[left][right]hstack,format=yuv420p,format=bgr32[00];[1]crop=iw:ih/1:0:0,scale=$w:$h,eq=contrast=0.4,format=bgr32,hue=b=-0.033[x];nullsrc=1x1,geq=r=128:g=128:b=128,scale=$w:$h,format=bgr32[y];[00][x][y]displace=edge=wrap[v]" -af "rubberband=pitch=2^(-2/12):window=short:transients=mixed:detector=soft:channels=together:pitchq=consistency" -map "[v]" -map 0:a -pix_fmt yuv420p -t $t -c:v ffv1 -c:a pcm_s16le 3.avi
+ffmpeg -i 0.avi -vf "movie=hslhue_45.ppm,[in]haldclut",format=yuv420p -af "rubberband=pitch=2^(1/12):window=short:transients=mixed:detector=soft:channels=together:pitchq=consistency" -t $t -c:v ffv1 -c:a pcm_s16le 4.avi
+ffmpeg -i 0.avi -t $t2 -c:v ffv1 -c:a pcm_s16le 5.avi
+ffmpeg -i 0.avi -vf "movie=hslhue_22.ppm,[in]haldclut",hflip,format=yuv420p -af "rubberband=pitch=2^(2/12):window=short:transients=smooth:detector=soft:channels=together:pitchq=consistency" -t $t2 -c:v ffv1 -c:a pcm_s16le 6.avi
+ffmpeg -i 0.avi -vf "movie=hslhue_45.ppm,[in]haldclut",format=yuv420p -af "rubberband=pitch=2^(1/12):window=short:transients=mixed:detector=soft:channels=together:pitchq=consistency" -t $t2 -c:v ffv1 -c:a pcm_s16le 7.avi
+ffmpeg -i 0.avi -vf "movie=hslhue_100.ppm,[in]haldclut",hflip,format=yuv420p -af "rubberband=pitch=2^(3/12):window=short:transients=mixed:detector=soft:channels=together:pitchq=consistency" -t $t2 -c:v ffv1 -c:a pcm_s16le 8.avi
+ffmpeg -i 0.avi -vf "movie=hslhue_100.ppm,[in]haldclut",format=yuv420p -af "rubberband=pitch=2^(-2/12):window=short:transients=mixed:detector=soft:channels=together:pitchq=consistency" -t $t2 -c:v ffv1 -c:a pcm_s16le 9.avi
+ffmpeg -i 0.avi -vf hflip -t $t2 -c:v ffv1 -c:a pcm_s16le 10.avi
+ffmpeg -i 0.avi -vf "movie=hslhue_45.ppm,[in]haldclut",format=yuv420p -af "rubberband=pitch=2^(1/12):window=short:transients=mixed:detector=soft:channels=together:pitchq=consistency" -t $t2 -c:v ffv1 -c:a pcm_s16le 11.avi
+ffmpeg -i 0.avi -vf "movie=hslhue_100.ppm,[in]haldclut",hflip,format=yuv420p -af "rubberband=pitch=2^(3/12):window=short:transients=mixed:detector=soft:channels=together:pitchq=consistency" -t $t2 -c:v ffv1 -c:a pcm_s16le 12.avi
+ffmpeg -i "concat:1.avi\u007c2.avi\u007c3.avi\u007c4.avi\u007c5.avi\u007c6.avi\u007c7.avi\u007c8.avi\u007c9.avi\u007c10.avi\u007c11.avi\u007c12.avi" -vf scale=$ww:$hh,setsar=1 ./output/p1280.mp4} {sh:{js:console.log(`{get:code}`)}}
+# WARNING: Make sure you use `.t sync+` to make the video synced to the audio
